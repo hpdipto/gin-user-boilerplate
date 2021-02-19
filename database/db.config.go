@@ -2,32 +2,24 @@ package database
 
 import (
 	"fmt"
-	user "gub/user"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
+// DB - bla bla
+var DB *gorm.DB
+
 // DBsetup is for basic DB setup
-func DBsetup() *gorm.DB {
+func DBsetup() {
+	var err error
 	// db configuration
 	dsn := "root:@tcp(127.0.0.1:3306)/gub?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	if err != nil {
 		panic("failed to connect database")
 	}
 
-	fmt.Println("Alhamdulillah DB connected successfully!")
-
-	return db
-}
-
-// Migrate for migrating all schema to db
-func Migrate() {
-	db := DBsetup()
-
-	db.AutoMigrate(&user.User{})
-
-	fmt.Println("Alhamdulillah migration done successfully!")
+	fmt.Println("Alhamdulillah, DB connected successfully!")
 }
