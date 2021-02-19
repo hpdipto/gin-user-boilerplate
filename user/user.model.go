@@ -12,7 +12,7 @@ type User struct {
 	LastName     string         `json:"last_name"`
 	Email        string         `json:"email"`
 	Age          uint8          `json:"age"`
-	Birthday     *time.Time     `json:"birth_day"`
+	Birthday     *time.Time     `json:"birth_day" `
 	MemberNumber sql.NullString `json:"-"`
 	ActivatedAt  sql.NullTime   `json:"-"`
 	CreatedAt    time.Time      `json:"-"`

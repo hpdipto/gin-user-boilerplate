@@ -55,15 +55,18 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	// taking input
-	var inputUser User
-	err = c.ShouldBindJSON(&inputUser)
+	var updatedUser User
+	err = c.ShouldBindJSON(&updatedUser)
+
 	if err != nil {
+		fmt.Println(updatedUser)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	fmt.Println(updatedUser)
 
-	// update in DB
-	db.DB.Model(&user).Updates(inputUser)
+	// update in DB without email
+	db.DB.Model(&user).Omit("email").Updates(updatedUser)
 
 	c.JSON(http.StatusOK, user)
 }
