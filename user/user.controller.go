@@ -167,8 +167,15 @@ func Logout(c *gin.Context) {
 func DeleteUser(c *gin.Context) {
 	id := c.Param("id")
 
+	userID, err := GetAuthenticatedUser(c)
+	// if token id not matched with route id, reject the request
+	if userID != id {
+		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized user"})
+		return
+	}
+
 	var user User
-	err := db.DB.Where("id = ?", id).First(&user).Error
+	err = db.DB.Where("id = ?", id).First(&user).Error
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
