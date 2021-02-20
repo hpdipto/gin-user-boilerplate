@@ -7,6 +7,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	"github.com/mattn/go-colorable"
 )
 
 // Router - global router
@@ -14,12 +15,14 @@ import (
 
 func main() {
 	baseURL := "/api"
-	gin.ForceConsoleColor()
 
 	// migrating the schema to db
 	database.DBsetup()
 	user.MigrateUser()
-	// user.CreateUser()
+
+	// gin coloring setup, mostly for windows
+	gin.DefaultWriter = colorable.NewColorableStdout()
+	gin.ForceConsoleColor()
 
 	// gin setup
 	r := gin.Default()

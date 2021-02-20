@@ -8,10 +8,10 @@ import (
 // User struct type
 type User struct {
 	ID           uint           `json:"id"`
-	FirstName    string         `json:"first_name"`
+	FirstName    string         `json:"first_name" binding:"required"`
 	LastName     string         `json:"last_name"`
-	Email        string         `json:"email"`
-	Password     string         `json:"password"`
+	Email        string         `json:"email" binding:"required"`
+	Password     string         `json:"password" binding:"required"`
 	Age          uint8          `json:"age"`
 	Birthday     *time.Time     `json:"birth_day" `
 	MemberNumber sql.NullString `json:"-"`
@@ -37,6 +37,6 @@ type Info struct {
 
 // LoginUser struct type
 type LoginUser struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }

@@ -7,6 +7,7 @@ require (
 	github.com/gin-contrib/sessions v0.0.3 // direct
 	github.com/gin-gonic/gin v1.6.3
 	github.com/json-iterator/go v1.1.10 // indirect
+	github.com/mattn/go-colorable v0.1.8 // direct
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // direct
 	gorm.io/driver/mysql v1.0.4
 	gorm.io/gorm v1.20.12
