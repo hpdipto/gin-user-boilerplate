@@ -9,7 +9,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	bcrypt "golang.org/x/crypto/bcrypt"
 )
 
 // MigrateUser - migrate the user schema to db
@@ -25,32 +24,21 @@ func GetUser(c *gin.Context) {
 	var user User
 	var userInfo Info // this variable is for displaying non sensitive data
 
-	// restoring token from session
-	session := sessions.Default(c)
-	sessionToken := session.Get("token").(string)
-	if sessionToken == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "please login to continue"})
-		return
-	}
+	// Get authenticated userID from session token
+	userID, err := GetAuthenticatedUser(c)
 
-	// parsing with claim, ignoring the token, taking id from the claim
-	claims := make(jwt.MapClaims)
-	_, jwterr := jwt.ParseWithClaims(sessionToken, claims, func(token *jwt.Token) (interface{}, error) {
-		// ****** need to add this to env variable *******
-		return []byte("secret"), nil
-	})
-	if jwterr != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": jwterr.Error()})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// if token id not matched with route id, reject the request
-	if fmt.Sprint(claims["id"]) != (id) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "user is fobidden to view this"})
+	if userID != id {
+		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized user"})
 		return
 	}
 
-	err := db.DB.Where("id = ?", id).First(&user).Error
+	err = db.DB.Where("id = ?", id).First(&user).Error
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
@@ -92,8 +80,15 @@ func UpdateUser(c *gin.Context) {
 	var user User
 	var userInfo Info // this variable is for displaying non sensitive data
 
+	userID, err := GetAuthenticatedUser(c)
+	// if token id not matched with route id, reject the request
+	if userID != id {
+		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized user"})
+		return
+	}
+
 	// retrieving user
-	err := db.DB.Where("id = ?", id).First(&user).Error
+	err = db.DB.Where("id = ?", id).First(&user).Error
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
@@ -182,16 +177,4 @@ func DeleteUser(c *gin.Context) {
 	db.DB.Delete(&user)
 
 	c.JSON(http.StatusOK, gin.H{"message": "user deleted successfully"})
-}
-
-// HashPassword for hasing password
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
-	return string(bytes), err
-}
-
-// ComparePasswordHash for comparing password and hash
-func ComparePasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
 }
