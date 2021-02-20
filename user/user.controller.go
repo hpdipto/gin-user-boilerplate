@@ -27,10 +27,26 @@ func GetUser(c *gin.Context) {
 
 	// restoring token from session
 	session := sessions.Default(c)
-	token := session.Get("token")
-	fmt.Println(token)
-	if token == nil {
+	sessionToken := session.Get("token").(string)
+	if sessionToken == "" {
 		c.JSON(http.StatusNotFound, gin.H{"error": "please login to continue"})
+		return
+	}
+
+	// parsing with claim, ignoring the token, taking id from the claim
+	claims := make(jwt.MapClaims)
+	_, jwterr := jwt.ParseWithClaims(sessionToken, claims, func(token *jwt.Token) (interface{}, error) {
+		// ****** need to add this to env variable *******
+		return []byte("secret"), nil
+	})
+	if jwterr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": jwterr.Error()})
+		return
+	}
+
+	// if token id not matched with route id, reject the request
+	if fmt.Sprint(claims["id"]) != (id) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "user is fobidden to view this"})
 		return
 	}
 
@@ -126,6 +142,7 @@ func Login(c *gin.Context) {
 		// ekpires in 5 mins
 		claims["exp"] = time.Now().Add(time.Minute * 5).Unix()
 		token.Claims = claims
+		// ****** need to add this to env variable *******
 		tokenString, jwterr := token.SignedString([]byte("secret"))
 		if jwterr != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": jwterr.Error()})
