@@ -4,7 +4,10 @@ import (
 	"fmt"
 	db "gub/database"
 	"net/http"
+	"time"
 
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	bcrypt "golang.org/x/crypto/bcrypt"
 )
@@ -21,6 +24,15 @@ func GetUser(c *gin.Context) {
 
 	var user User
 	var userInfo Info // this variable is for displaying non sensitive data
+
+	// restoring token from session
+	session := sessions.Default(c)
+	token := session.Get("token")
+	fmt.Println(token)
+	if token == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "please login to continue"})
+		return
+	}
 
 	err := db.DB.Where("id = ?", id).First(&user).Error
 	if err != nil {
@@ -90,7 +102,7 @@ func UpdateUser(c *gin.Context) {
 func Login(c *gin.Context) {
 	var loginUser LoginUser
 	var user User
-	var userInfo Info // this variable is for displaying non sensitive data
+	// var userInfo Info // this variable is for displaying non sensitive data
 
 	err := c.ShouldBindJSON(&loginUser)
 	if err != nil {
@@ -105,13 +117,38 @@ func Login(c *gin.Context) {
 		return
 	}
 	// matching password
+	// if matched then send the token to the user
 	if ComparePasswordHash(loginUser.Password, user.Password) {
-		userInfo = Info(user)
-		c.JSON(http.StatusAccepted, userInfo)
+		// userInfo = Info(user)
+		token := jwt.New(jwt.SigningMethodHS256)
+		claims := make(jwt.MapClaims)
+		claims["id"] = user.ID
+		// ekpires in 5 mins
+		claims["exp"] = time.Now().Add(time.Minute * 5).Unix()
+		token.Claims = claims
+		tokenString, jwterr := token.SignedString([]byte("secret"))
+		if jwterr != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": jwterr.Error()})
+			return
+		}
+		// saving the session
+		session := sessions.Default(c)
+		session.Set("token", tokenString)
+		session.Save()
+		c.JSON(http.StatusAccepted, gin.H{"authenticated": true, "token": tokenString})
 		return
+
 	}
 	// if password don't match
 	c.JSON(http.StatusBadRequest, gin.H{"error": "password doesn't match"})
+}
+
+// Logout for logging out a user
+func Logout(c *gin.Context) {
+	session := sessions.Default(c)
+	session.Clear()
+	session.Save()
+	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }
 
 // DeleteUser for deleting a user

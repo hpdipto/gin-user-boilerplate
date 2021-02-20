@@ -13,5 +13,6 @@ func Routes(router *gin.Engine, baseURL string) {
 		userRoute.PUT("/:id", UpdateUser)
 		userRoute.DELETE("/:id", DeleteUser)
 		userRoute.POST("/login", Login)
+		userRoute.POST("/logout", Logout)
 	}
 }

@@ -4,6 +4,8 @@ import (
 	"gub/database"
 	"gub/user"
 
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,6 +23,9 @@ func main() {
 
 	// gin setup
 	r := gin.Default()
+
+	store := cookie.NewStore([]byte("secret"))
+	r.Use(sessions.Sessions("session", store))
 
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
