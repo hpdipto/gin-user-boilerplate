@@ -20,8 +20,8 @@ type User struct {
 	UpdatedAt    time.Time      `json:"-"`
 }
 
-// UserInfo struct type
-type UserInfo struct {
+// Info struct type
+type Info struct {
 	ID           uint           `json:"id"`
 	FirstName    string         `json:"first_name"`
 	LastName     string         `json:"last_name"`

@@ -20,7 +20,7 @@ func GetUser(c *gin.Context) {
 	id := c.Param("id")
 
 	var user User
-	var userInfo UserInfo // this variable is for displaying non sensitive data
+	var userInfo Info // this variable is for displaying non sensitive data
 
 	err := db.DB.Where("id = ?", id).First(&user).Error
 	if err != nil {
@@ -29,14 +29,14 @@ func GetUser(c *gin.Context) {
 	}
 
 	// displaying non sensitive data
-	userInfo = UserInfo(user)
+	userInfo = Info(user)
 	c.JSON(http.StatusCreated, userInfo)
 }
 
 // CreateUser is for creating an user
 func CreateUser(c *gin.Context) {
 	var user User
-	var userInfo UserInfo // this variable is for displaying non sensitive data
+	var userInfo Info // this variable is for displaying non sensitive data
 
 	err := c.ShouldBindJSON(&user)
 	if err != nil {
@@ -53,7 +53,7 @@ func CreateUser(c *gin.Context) {
 
 	db.DB.Create(&user)
 	// displaying non sensitive data
-	userInfo = UserInfo(user)
+	userInfo = Info(user)
 	c.JSON(http.StatusCreated, userInfo)
 }
 
@@ -62,7 +62,7 @@ func UpdateUser(c *gin.Context) {
 	id := c.Param("id")
 
 	var user User
-	var userInfo UserInfo // this variable is for displaying non sensitive data
+	var userInfo Info // this variable is for displaying non sensitive data
 
 	// retrieving user
 	err := db.DB.Where("id = ?", id).First(&user).Error
@@ -82,7 +82,7 @@ func UpdateUser(c *gin.Context) {
 	// update in DB without email and password field
 	db.DB.Model(&user).Omit("email").Omit("password").Updates(updatedUser)
 	// displaying non sensitive data
-	userInfo = UserInfo(user)
+	userInfo = Info(user)
 	c.JSON(http.StatusCreated, userInfo)
 }
 
@@ -90,7 +90,7 @@ func UpdateUser(c *gin.Context) {
 func Login(c *gin.Context) {
 	var loginUser LoginUser
 	var user User
-	var userInfo UserInfo // this variable is for displaying non sensitive data
+	var userInfo Info // this variable is for displaying non sensitive data
 
 	err := c.ShouldBindJSON(&loginUser)
 	if err != nil {
@@ -106,7 +106,7 @@ func Login(c *gin.Context) {
 	}
 	// matching password
 	if ComparePasswordHash(loginUser.Password, user.Password) {
-		userInfo = UserInfo(user)
+		userInfo = Info(user)
 		c.JSON(http.StatusAccepted, userInfo)
 		return
 	}
