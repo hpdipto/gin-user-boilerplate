@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	bcrypt "golang.org/x/crypto/bcrypt"
 )
 
 // MigrateUser - migrate the user schema to db
@@ -19,18 +20,23 @@ func GetUser(c *gin.Context) {
 	id := c.Param("id")
 
 	var user User
+	var userInfo UserInfo // this variable is for displaying non sensitive data
+
 	err := db.DB.Where("id = ?", id).First(&user).Error
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	// displaying non sensitive data
+	userInfo = UserInfo(user)
+	c.JSON(http.StatusCreated, userInfo)
 }
 
 // CreateUser is for creating an user
 func CreateUser(c *gin.Context) {
 	var user User
+	var userInfo UserInfo // this variable is for displaying non sensitive data
 
 	err := c.ShouldBindJSON(&user)
 	if err != nil {
@@ -38,37 +44,74 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
+	// hasing the password
+	user.Password, err = HashPassword(user.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	db.DB.Create(&user)
-	c.JSON(http.StatusCreated, user)
+	// displaying non sensitive data
+	userInfo = UserInfo(user)
+	c.JSON(http.StatusCreated, userInfo)
 }
 
 // UpdateUser is for updating an user
 func UpdateUser(c *gin.Context) {
 	id := c.Param("id")
 
-	// retrieving user
 	var user User
+	var userInfo UserInfo // this variable is for displaying non sensitive data
+
+	// retrieving user
 	err := db.DB.Where("id = ?", id).First(&user).Error
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
 	}
 
 	// taking input
 	var updatedUser User
 	err = c.ShouldBindJSON(&updatedUser)
-
 	if err != nil {
-		fmt.Println(updatedUser)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	fmt.Println(updatedUser)
 
-	// update in DB without email
-	db.DB.Model(&user).Omit("email").Updates(updatedUser)
+	// update in DB without email and password field
+	db.DB.Model(&user).Omit("email").Omit("password").Updates(updatedUser)
+	// displaying non sensitive data
+	userInfo = UserInfo(user)
+	c.JSON(http.StatusCreated, userInfo)
+}
 
-	c.JSON(http.StatusOK, user)
+// Login functionality for a user
+func Login(c *gin.Context) {
+	var loginUser LoginUser
+	var user User
+	var userInfo UserInfo // this variable is for displaying non sensitive data
+
+	err := c.ShouldBindJSON(&loginUser)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// find user by email
+	db.DB.Where("email = ?", loginUser.Email).First(&user)
+	if user.Email == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+	// matching password
+	if ComparePasswordHash(loginUser.Password, user.Password) {
+		userInfo = UserInfo(user)
+		c.JSON(http.StatusAccepted, userInfo)
+		return
+	}
+	// if password don't match
+	c.JSON(http.StatusBadRequest, gin.H{"error": "password doesn't match"})
 }
 
 // DeleteUser for deleting a user
@@ -78,11 +121,23 @@ func DeleteUser(c *gin.Context) {
 	var user User
 	err := db.DB.Where("id = ?", id).First(&user).Error
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
 	}
 
 	db.DB.Delete(&user)
 
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "user deleted successfully"})
+}
+
+// HashPassword for hasing password
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	return string(bytes), err
+}
+
+// ComparePasswordHash for comparing password and hash
+func ComparePasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }

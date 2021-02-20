@@ -11,10 +11,32 @@ type User struct {
 	FirstName    string         `json:"first_name"`
 	LastName     string         `json:"last_name"`
 	Email        string         `json:"email"`
+	Password     string         `json:"password"`
 	Age          uint8          `json:"age"`
 	Birthday     *time.Time     `json:"birth_day" `
 	MemberNumber sql.NullString `json:"-"`
 	ActivatedAt  sql.NullTime   `json:"-"`
 	CreatedAt    time.Time      `json:"-"`
 	UpdatedAt    time.Time      `json:"-"`
+}
+
+// UserInfo struct type
+type UserInfo struct {
+	ID           uint           `json:"id"`
+	FirstName    string         `json:"first_name"`
+	LastName     string         `json:"last_name"`
+	Email        string         `json:"email"`
+	Password     string         `json:"-"`
+	Age          uint8          `json:"age"`
+	Birthday     *time.Time     `json:"birth_day" `
+	MemberNumber sql.NullString `json:"-"`
+	ActivatedAt  sql.NullTime   `json:"-"`
+	CreatedAt    time.Time      `json:"-"`
+	UpdatedAt    time.Time      `json:"-"`
+}
+
+// LoginUser struct type
+type LoginUser struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
