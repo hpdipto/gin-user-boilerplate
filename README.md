@@ -29,3 +29,10 @@ To register a user, once need to send JSON as following format:
 ```
 
 Special case is for `birth_day` property. Its required to send date in the above mentioned format.
+
+<br/>
+<br/>
+
+### Future Improvements
+
+There are lots of cases where improvement is needed. I mostly did it for my personal usage. So I think its very less likely that I'll make those improvemnts in future. 😅😅
